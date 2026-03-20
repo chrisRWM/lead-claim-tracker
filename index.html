@@ -563,7 +563,9 @@ const PALETTES = [
   { bg:'#FBEAF0', text:'#72243E', bar:'#D4537E' },
 ];
 
-let accessToken = '';
+function getToken() { return sessionStorage.getItem('rwm_token') || ''; }
+function setToken(t) { sessionStorage.setItem('rwm_token', t); }
+function clearToken() { sessionStorage.removeItem('rwm_token'); }
 let colorMap = {};
 let colorIdx = 0;
 let claims = {};
@@ -607,7 +609,7 @@ function parseFragment() {
 async function loadUserProfile() {
   try {
     const res = await fetch(`${GRAPH}/me?$select=displayName`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${getToken()}` }
     });
     const data = await res.json();
     const name = data.displayName || 'You';
@@ -622,7 +624,7 @@ async function loadChats() {
   setStatus('Loading your group chats...', 'info');
   try {
     const res = await fetch(`${GRAPH}/me/chats?$filter=chatType eq 'group'&$select=id,topic,lastUpdatedDateTime&$top=50`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${getToken()}` }
     });
     if (!res.ok) throw new Error('Could not load chats. Make sure Chat.Read permission is granted.');
     const data = await res.json();
@@ -661,7 +663,7 @@ async function fetchMessages() {
   setStatus('Fetching messages...', 'info');
   try {
     const res = await fetch(`${GRAPH}/me/chats/${chatId}/messages?$top=100`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${getToken()}` }
     });
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
@@ -824,14 +826,14 @@ function renderMessages(claimedIds) {
 function init() {
   const params = parseFragment();
   if (params.access_token) {
-    accessToken = params.access_token;
-    sessionStorage.setItem('rwm_token', accessToken);
+    setToken(params.access_token);
+    
     window.history.replaceState(null, null, ' ');
   } else {
-    accessToken = sessionStorage.getItem('rwm_token') || '';
+    
   }
 
-  if (accessToken) {
+  if (getToken()) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appScreen').style.display = 'block';
     loadUserProfile();
@@ -840,8 +842,7 @@ function init() {
 }
 
 function signOut() {
-  accessToken = '';
-  sessionStorage.removeItem('rwm_token');
+  clearToken();
   claims = {};
   colorMap = {};
   colorIdx = 0;
