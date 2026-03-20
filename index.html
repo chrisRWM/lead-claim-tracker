@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lead Claim Tracker — Roberts Wealth Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --green: #1D9E75;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --green-text: #085041;
+    --surface: #f7f6f3;
+    --card: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1a18;
+    --muted: #6b6b68;
+    --subtle: #a8a8a4;
+    --accent1: #7F77DD;
+    --accent1-light: #EEEDFE;
+    --accent1-text: #3C3489;
+    --accent2: #D85A30;
+    --accent2-light: #FAECE7;
+    --accent2-text: #712B13;
+    --accent3: #378ADD;
+    --accent3-light: #E6F1FB;
+    --accent3-text: #0C447C;
+    --accent4: #BA7517;
+    --accent4-light: #FAEEDA;
+    --accent4-text: #633806;
+    --accent5: #D4537E;
+    --accent5-light: #FBEAF0;
+    --accent5-text: #72243E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 18px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .logo span { color: var(--green); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-pill {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px 4px 6px;
+  }
+
+  .user-pill .avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--green-light);
+    color: var(--green-text);
+    font-size: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sign-out {
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .sign-out:hover { color: var(--text); }
+
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  /* Login screen */
+  #loginScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 56px);
+    text-align: center;
+  }
+
+  .login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    max-width: 380px;
+    width: 100%;
+  }
+
+  .login-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--green-light);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+  }
+
+  .login-icon svg { width: 26px; height: 26px; }
+
+  .login-card h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+
+  .login-card p {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .btn-connect {
+    width: 100%;
+    padding: 11px 16px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+
+  .btn-connect:hover { background: var(--green-dark); }
+
+  .login-note {
+    font-size: 11px;
+    color: var(--subtle);
+    margin-top: 1rem;
+    line-height: 1.5;
+  }
+
+  /* App screen */
+  #appScreen { display: none; }
+
+  .page-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .page-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+
+  /* Chat selector */
+  .chat-selector {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .chat-selector label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .chat-selector select {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .btn-sm {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s;
+  }
+
+  .btn-sm:hover { background: var(--surface); }
+
+  .btn-sm.primary {
+    background: var(--green);
+    color: white;
+    border-color: var(--green-dark);
+  }
+
+  .btn-sm.primary:hover { background: var(--green-dark); }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  /* Status bar */
+  .status-bar {
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  .status-bar.info { background: var(--green-light); color: var(--green-text); display: block; }
+  .status-bar.error { background: #FCEBEB; color: #791F1F; display: block; }
+
+  /* Leaderboard */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .lb-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.5rem; }
+
+  .lb-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.12s;
+  }
+
+  .lb-row:hover { border-color: rgba(0,0,0,0.15); }
+
+  .lb-rank {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--subtle);
+    width: 18px;
+    text-align: right;
+  }
+
+  .lb-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .lb-info { flex: 1; min-width: 0; }
+
+  .lb-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .lb-leads {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .lead-chip {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .lb-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .lb-bar-wrap {
+    width: 72px;
+    height: 4px;
+    background: var(--surface);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .lb-bar { height: 100%; border-radius: 2px; }
+
+  .lb-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    min-width: 24px;
+    text-align: right;
+  }
+
+  /* Messages panel */
+  .msg-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .msg-panel-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .msg-panel-title { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+  .msg-feed {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .msg-item {
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .msg-sender { font-weight: 500; color: var(--text); }
+  .msg-text { color: var(--muted); }
+  .msg-claimed { font-size: 11px; padding: 1px 6px; border-radius: 10px; background: var(--green-light); color: var(--green-text); margin-left: 6px; font-family: 'DM Mono', monospace; }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--subtle);
+    font-size: 14px;
+  }
+
+  /* Analyzing indicator */
+  .analyzing-badge {
+    display: none;
+    font-size: 12px;
+    color: var(--green-text);
+    background: var(--green-light);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+    .lb-bar-wrap { display: none; }
+    .chat-selector { flex-wrap: wrap; }
+    main { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Roberts <span>WM</span> · Lead Tracker</div>
+  <div class="header-right">
+    <div class="user-pill" id="userPill">
+      <div class="avatar" id="userInitials">?</div>
+      <span id="userName">Loading...</span>
+    </div>
+    <button class="sign-out" id="signOutBtn" style="display:none" onclick="signOut()">Sign out</button>
+  </div>
+</header>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="9" cy="7" r="4" stroke="#1D9E75" stroke-width="2"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1>Lead Claim Tracker</h1>
+    <p>Sign in with your Roberts WM Microsoft account to view the lead claim leaderboard.</p>
+    <button class="btn-connect" onclick="startAuth()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M11.5 2.5h-9v9h9v-9zm0 10h-9v9h9v-9zm1 0h9v9h-9v-9zm0-10h9v9h-9v-9z"/></svg>
+      Connect to Microsoft Teams
+    </button>
+    <p class="login-note">Uses your existing Microsoft 365 login. Read-only access to group chat messages.</p>
+  </div>
+</div>
+
+<main id="appScreen">
+  <div class="page-title">Lead Claim Leaderboard</div>
+  <div class="page-sub" id="pageSub">Select a group chat to load claims</div>
+
+  <div class="chat-selector">
+    <label>Group chat</label>
+    <select id="chatSelect" onchange="onChatSelect()">
+      <option value="">Loading chats...</option>
+    </select>
+    <button class="btn-sm" onclick="fetchMessages()">Refresh</button>
+    <span class="analyzing-badge" id="analyzingBadge">analyzing...</span>
+  </div>
+
+  <div class="status-bar" id="statusBar"></div>
+
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-label">Total claims</div>
+      <div class="stat-value" id="sTotalClaims">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Advisors</div>
+      <div class="stat-value" id="sTotalMembers">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Leads tracked</div>
+      <div class="stat-value" id="sTotalLeads">—</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-label">Rankings</div>
+  </div>
+  <div class="lb-list" id="leaderboard">
+    <div class="empty-state">Select a chat above to load the leaderboard</div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-label">Recent messages</div>
+    <div style="font-size:12px;color:var(--subtle)">Last 100 messages</div>
+  </div>
+  <div class="msg-panel">
+    <div class="msg-feed" id="msgFeed">
+      <div class="empty-state">No messages loaded</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const TENANT_ID = '62d73643-f5cf-4fe9-b103-83feade8e6d8';
+const CLIENT_ID = 'eedf80ee-cbf4-4f6a-8a2b-3cb5afd6cb2c';
+const SCOPES = 'https://graph.microsoft.com/Chat.Read openid profile';
+const GRAPH = 'https://graph.microsoft.com/v1.0';
+
+const PALETTES = [
+  { bg:'#E1F5EE', text:'#085041', bar:'#1D9E75' },
+  { bg:'#EEEDFE', text:'#3C3489', bar:'#7F77DD' },
+  { bg:'#FAECE7', text:'#712B13', bar:'#D85A30' },
+  { bg:'#E6F1FB', text:'#0C447C', bar:'#378ADD' },
+  { bg:'#FAEEDA', text:'#633806', bar:'#BA7517' },
+  { bg:'#FBEAF0', text:'#72243E', bar:'#D4537E' },
+];
+
+let accessToken = '';
+let colorMap = {};
+let colorIdx = 0;
+let claims = {};
+let allMessages = [];
+
+function getColor(name) {
+  if (!colorMap[name]) { colorMap[name] = PALETTES[colorIdx++ % PALETTES.length]; }
+  return colorMap[name];
+}
+
+function initials(name) {
+  return name.split(' ').filter(Boolean).map(p => p[0]).join('').toUpperCase().slice(0, 2) || '?';
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setStatus(msg, type = 'info') {
+  const el = document.getElementById('statusBar');
+  el.className = 'status-bar ' + type;
+  el.textContent = msg;
+  if (!msg) el.style.display = 'none';
+}
+
+function startAuth() {
+  const redirect = encodeURIComponent(window.location.href.split('?')[0].split('#')[0]);
+  const url = `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/authorize` +
+    `?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${redirect}` +
+    `&scope=${encodeURIComponent(SCOPES)}&response_mode=fragment&prompt=select_account`;
+  window.location.href = url;
+}
+
+function signOut() {
+  accessToken = '';
+  claims = {};
+  colorMap = {};
+  colorIdx = 0;
+  allMessages = [];
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('userPill').style.display = 'none';
+  document.getElementById('signOutBtn').style.display = 'none';
+  window.history.replaceState(null, null, ' ');
+}
+
+function parseFragment() {
+  const hash = window.location.hash.substring(1);
+  const p = {};
+  hash.split('&').forEach(s => { const [k, v] = s.split('='); if (k) p[k] = decodeURIComponent(v || ''); });
+  return p;
+}
+
+async function loadUserProfile() {
+  try {
+    const res = await fetch(`${GRAPH}/me?$select=displayName`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const data = await res.json();
+    const name = data.displayName || 'You';
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userInitials').textContent = initials(name);
+    document.getElementById('userPill').style.display = 'flex';
+    document.getElementById('signOutBtn').style.display = 'inline';
+  } catch(e) {}
+}
+
+async function loadChats() {
+  setStatus('Loading your group chats...', 'info');
+  try {
+    const res = await fetch(`${GRAPH}/me/chats?$filter=chatType eq 'group'&$select=id,topic,lastUpdatedDateTime&$top=50`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!res.ok) throw new Error('Could not load chats. Make sure Chat.Read permission is granted.');
+    const data = await res.json();
+    const chats = data.value || [];
+    const sel = document.getElementById('chatSelect');
+    sel.innerHTML = '<option value="">— select a group chat —</option>';
+    chats.forEach(c => {
+      const label = c.topic || `Chat (updated ${new Date(c.lastUpdatedDateTime).toLocaleDateString()})`;
+      sel.innerHTML += `<option value="${c.id}">${esc(label)}</option>`;
+    });
+    setStatus('');
+  } catch(e) {
+    setStatus(e.message, 'error');
+  }
+}
+
+function onChatSelect() {
+  const val = document.getElementById('chatSelect').value;
+  if (!val) return;
+  claims = {};
+  colorMap = {};
+  colorIdx = 0;
+  fetchMessages();
+}
+
+function stripHtml(html) {
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return d.textContent || d.innerText || '';
+}
+
+async function fetchMessages() {
+  const chatId = document.getElementById('chatSelect').value;
+  if (!chatId) return;
+
+  setStatus('Fetching messages...', 'info');
+  try {
+    const res = await fetch(`${GRAPH}/me/chats/${chatId}/messages?$top=100`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!res.ok) throw new Error('Failed to load messages.');
+    const data = await res.json();
+    allMessages = (data.value || [])
+      .filter(m => m.messageType === 'message' && m.body?.content)
+      .reverse()
+      .map(m => ({
+        id: m.id,
+        name: m.from?.user?.displayName || 'Unknown',
+        text: stripHtml(m.body.content).trim(),
+        timestamp: m.createdDateTime
+      }))
+      .filter(m => m.text.length > 0);
+
+    setStatus(`Loaded ${allMessages.length} messages — analyzing for claims...`, 'info');
+    renderMessages([]);
+    await analyzeAll(chatId);
+  } catch(e) {
+    setStatus(e.message, 'error');
+  }
+}
+
+async function analyzeAll(chatId) {
+  document.getElementById('analyzingBadge').style.display = 'inline';
+  claims = {};
+
+  const msgs = allMessages.map(m => ({ id: m.id, name: m.name, text: m.text }));
+
+  const prompt = `You are analyzing Microsoft Teams group chat messages from a financial advisory firm. Advisors claim leads using phrases like "Name - got it", "got it - Name", "Chris got it", "I got the Johnsons", "taking Smith", "claiming Martinez", etc. The lead name is typically a person's name.
+
+Analyze these messages and return a JSON array of claims only. Each item: {"msgId":"...","claimer":"advisor name","leadName":"lead name"}.
+Skip non-claim messages. If lead name is unclear use "unspecified".
+
+Messages:
+${JSON.stringify(msgs.slice(-100))}
+
+Reply ONLY with a JSON array. No markdown, no explanation.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+    const claimsArr = JSON.parse(raw);
+    const claimedIds = new Set();
+
+    for (const c of claimsArr) {
+      if (!claims[c.claimer]) claims[c.claimer] = { count: 0, leads: [], msgIds: [] };
+      claims[c.claimer].count++;
+      if (c.leadName && c.leadName !== 'unspecified') claims[c.claimer].leads.push(c.leadName);
+      if (c.msgId) { claims[c.claimer].msgIds.push(c.msgId); claimedIds.add(c.msgId); }
+    }
+
+    renderMessages(claimedIds);
+    renderLeaderboard();
+    renderStats();
+    setStatus('');
+  } catch(e) {
+    setStatus('AI analysis error — ' + e.message, 'error');
+  }
+
+  document.getElementById('analyzingBadge').style.display = 'none';
+}
+
+function renderStats() {
+  const names = Object.keys(claims);
+  const total = names.reduce((s, n) => s + claims[n].count, 0);
+  const leads = names.reduce((s, n) => s + claims[n].leads.length, 0);
+  document.getElementById('sTotalClaims').textContent = total;
+  document.getElementById('sTotalMembers').textContent = names.length;
+  document.getElementById('sTotalLeads').textContent = leads;
+  const chat = document.getElementById('chatSelect');
+  const chatName = chat.options[chat.selectedIndex]?.text || '';
+  document.getElementById('pageSub').textContent = chatName ? `${chatName} · ${allMessages.length} messages scanned` : 'Select a group chat to load claims';
+}
+
+function renderLeaderboard() {
+  const el = document.getElementById('leaderboard');
+  const names = Object.keys(claims);
+  if (!names.length) {
+    el.innerHTML = '<div class="empty-state">No claims detected in this chat</div>';
+    return;
+  }
+  const sorted = names.sort((a, b) => claims[b].count - claims[a].count);
+  const max = claims[sorted[0]].count || 1;
+
+  el.innerHTML = sorted.map((name, i) => {
+    const c = getColor(name);
+    const d = claims[name];
+    const pct = Math.round((d.count / max) * 100);
+    const leadsHtml = d.leads.length
+      ? d.leads.slice(0, 6).map(l => `<span class="lead-chip">${esc(l)}</span>`).join('') +
+        (d.leads.length > 6 ? `<span class="lead-chip">+${d.leads.length - 6}</span>` : '')
+      : '';
+
+    return `<div class="lb-row">
+      <div class="lb-rank">${i + 1}</div>
+      <div class="lb-avatar" style="background:${c.bg};color:${c.text}">${initials(name)}</div>
+      <div class="lb-info">
+        <div class="lb-name">${esc(name)}</div>
+        ${leadsHtml ? `<div class="lb-leads">${leadsHtml}</div>` : ''}
+      </div>
+      <div class="lb-right">
+        <div class="lb-bar-wrap"><div class="lb-bar" style="width:${pct}%;background:${c.bar}"></div></div>
+        <div class="lb-count">${d.count}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMessages(claimedIds) {
+  const el = document.getElementById('msgFeed');
+  if (!allMessages.length) { el.innerHTML = '<div class="empty-state">No messages loaded</div>'; return; }
+  el.innerHTML = allMessages.slice(-50).map(m => {
+    const claimed = claimedIds instanceof Set ? claimedIds.has(m.id) : false;
+    return `<div class="msg-item">
+      <span class="msg-sender">${esc(m.name)}</span>${claimed ? '<span class="msg-claimed">claimed</span>' : ''}
+      <span class="msg-text"> · ${esc(m.text.slice(0, 100))}${m.text.length > 100 ? '…' : ''}</span>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function init() {
+  const params = parseFragment();
+  if (params.access_token) {
+    accessToken = params.access_token;
+    window.history.replaceState(null, null, ' ');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'block';
+    loadUserProfile();
+    loadChats();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
