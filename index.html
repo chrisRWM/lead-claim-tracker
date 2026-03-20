@@ -691,58 +691,84 @@ async function fetchMessages() {
 
     setStatus(`Loaded ${allMessages.length} messages — analyzing for claims...`, 'info');
     renderMessages([]);
-    await analyzeAll(chatId);
+    analyzeAll(chatId);
   } catch(e) {
     setStatus(e.message, 'error');
   }
 }
 
-async function analyzeAll(chatId) {
+// Detects lead claims using pattern matching - runs entirely in the browser
+function detectClaim(senderName, text) {
+  const t = text.trim();
+  const lower = t.toLowerCase();
+
+  // Must contain a claim keyword to proceed
+  const keywords = ['got it', 'got', 'taking', 'take', 'claiming', 'claim', "i'll take", "i will take", 'mine', 'on it', 'i got', 'grabbed'];
+  if (!keywords.some(k => lower.includes(k))) return null;
+
+  // Pattern 1: "Name - got it" or "Name – got it"
+  let m = t.match(/^([A-Z][a-zA-Z\s]{1,30}?)\s*[-–]\s*got\s+it\b/i);
+  if (m) return { leadName: m[1].trim() };
+
+  // Pattern 2: "got it - Name" or "got it – Name"
+  m = t.match(/\bgot\s+it\s*[-–]\s*([A-Z][a-zA-Z\s]{1,30})/i);
+  if (m) return { leadName: m[1].trim() };
+
+  // Pattern 3: "Name got it" (lead name first, no dash)
+  m = t.match(/^([A-Z][a-zA-Z\s]{1,25}?)\s+got\s+it\b/i);
+  if (m && m[1].trim().toLowerCase() !== senderName.toLowerCase()) return { leadName: m[1].trim() };
+
+  // Pattern 4: "I got [the] Name" / "I got Name"
+  m = t.match(/\bi\s+got\s+(?:the\s+)?([A-Z][a-zA-Z\s]{1,30})/i);
+  if (m) return { leadName: m[1].trim() };
+
+  // Pattern 5: "taking [the] Name" / "I'm taking Name"
+  m = t.match(/\btaking\s+(?:the\s+)?([A-Z][a-zA-Z\s]{1,30})/i);
+  if (m) return { leadName: m[1].trim() };
+
+  // Pattern 6: "I'll take / I will take [the] Name"
+  m = t.match(/\b(?:i(?:'ll| will)\s+take)\s+(?:the\s+)?([A-Z][a-zA-Z\s]{1,30})/i);
+  if (m) return { leadName: m[1].trim() };
+
+  // Pattern 7: "claiming [the] Name"
+  m = t.match(/\bclaiming\s+(?:the\s+)?([A-Z][a-zA-Z\s]{1,30})/i);
+  if (m) return { leadName: m[1].trim() };
+
+  // Pattern 8: "grabbed [the] Name"
+  m = t.match(/\bgrabbed\s+(?:the\s+)?([A-Z][a-zA-Z\s]{1,30})/i);
+  if (m) return { leadName: m[1].trim() };
+
+  // Pattern 9: plain "got it" with no lead name — count as unspecified claim
+  if (lower === 'got it' || lower.match(/^got it[.!]?$/)) {
+    return { leadName: 'unspecified' };
+  }
+
+  return null;
+}
+
+function analyzeAll(chatId) {
   document.getElementById('analyzingBadge').style.display = 'inline';
   claims = {};
 
-  const msgs = allMessages.map(m => ({ id: m.id, name: m.name, text: m.text }));
+  const claimedIds = new Set();
 
-  const prompt = `You are analyzing Microsoft Teams group chat messages from a financial advisory firm. Advisors claim leads using phrases like "Name - got it", "got it - Name", "Chris got it", "I got the Johnsons", "taking Smith", "claiming Martinez", etc. The lead name is typically a person's name.
-
-Analyze these messages and return a JSON array of claims only. Each item: {"msgId":"...","claimer":"advisor name","leadName":"lead name"}.
-Skip non-claim messages. If lead name is unclear use "unspecified".
-
-Messages:
-${JSON.stringify(msgs.slice(-100))}
-
-Reply ONLY with a JSON array. No markdown, no explanation.`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-    const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
-    const claimsArr = JSON.parse(raw);
-    const claimedIds = new Set();
-
-    for (const c of claimsArr) {
-      if (!claims[c.claimer]) claims[c.claimer] = { count: 0, leads: [], msgIds: [] };
-      claims[c.claimer].count++;
-      if (c.leadName && c.leadName !== 'unspecified') claims[c.claimer].leads.push(c.leadName);
-      if (c.msgId) { claims[c.claimer].msgIds.push(c.msgId); claimedIds.add(c.msgId); }
+  for (const msg of allMessages) {
+    const result = detectClaim(msg.name, msg.text);
+    if (result) {
+      if (!claims[msg.name]) claims[msg.name] = { count: 0, leads: [], msgIds: [] };
+      claims[msg.name].count++;
+      if (result.leadName && result.leadName !== 'unspecified') {
+        claims[msg.name].leads.push(result.leadName);
+      }
+      claims[msg.name].msgIds.push(msg.id);
+      claimedIds.add(msg.id);
     }
-
-    renderMessages(claimedIds);
-    renderLeaderboard();
-    renderStats();
-    setStatus('');
-  } catch(e) {
-    setStatus('AI analysis error — ' + e.message, 'error');
   }
 
+  renderMessages(claimedIds);
+  renderLeaderboard();
+  renderStats();
+  setStatus('');
   document.getElementById('analyzingBadge').style.display = 'none';
 }
 
