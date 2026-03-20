@@ -662,7 +662,7 @@ async function fetchMessages() {
 
   setStatus('Fetching messages...', 'info');
   try {
-    const res = await fetch(`${GRAPH}/me/chats/${chatId}/messages?$top=100`, {
+    const res = await fetch(`${GRAPH}/me/chats/${encodeURIComponent(chatId)}/messages?$top=100`, {
       headers: { Authorization: `Bearer ${getToken()}` }
     });
     if (!res.ok) {
