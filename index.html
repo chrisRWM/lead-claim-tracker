@@ -597,19 +597,6 @@ function startAuth() {
   window.location.href = url;
 }
 
-function signOut() {
-  accessToken = '';
-  claims = {};
-  colorMap = {};
-  colorIdx = 0;
-  allMessages = [];
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('appScreen').style.display = 'none';
-  document.getElementById('userPill').style.display = 'none';
-  document.getElementById('signOutBtn').style.display = 'none';
-  window.history.replaceState(null, null, ' ');
-}
-
 function parseFragment() {
   const hash = window.location.hash.substring(1);
   const p = {};
@@ -676,7 +663,10 @@ async function fetchMessages() {
     const res = await fetch(`${GRAPH}/me/chats/${chatId}/messages?$top=100`, {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
-    if (!res.ok) throw new Error('Failed to load messages.');
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(`Graph error ${res.status}: ${errBody?.error?.message || errBody?.error?.code || 'unknown'}`);
+    }
     const data = await res.json();
     allMessages = (data.value || [])
       .filter(m => m.messageType === 'message' && m.body?.content)
@@ -835,12 +825,32 @@ function init() {
   const params = parseFragment();
   if (params.access_token) {
     accessToken = params.access_token;
+    sessionStorage.setItem('rwm_token', accessToken);
     window.history.replaceState(null, null, ' ');
+  } else {
+    accessToken = sessionStorage.getItem('rwm_token') || '';
+  }
+
+  if (accessToken) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appScreen').style.display = 'block';
     loadUserProfile();
     loadChats();
   }
+}
+
+function signOut() {
+  accessToken = '';
+  sessionStorage.removeItem('rwm_token');
+  claims = {};
+  colorMap = {};
+  colorIdx = 0;
+  allMessages = [];
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('userPill').style.display = 'none';
+  document.getElementById('signOutBtn').style.display = 'none';
+  window.history.replaceState(null, null, ' ');
 }
 
 init();
